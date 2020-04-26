@@ -1,5 +1,5 @@
 
 #[test]
 fn it_works() {
-    assert_eq!(2 + 2, 4);
+    super::teapot::listen("", Vec::<(String, &dyn super::teapot::RequestHandler)>::new());
 }
