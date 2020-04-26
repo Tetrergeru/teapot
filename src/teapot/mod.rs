@@ -9,7 +9,7 @@ pub trait RequestHandler {
 }
 
 pub fn listen(adress: &str, routing: Vec<(String, &dyn RequestHandler)>) {
-    let listener = TcpListener::bind("0.0.0.0:80").unwrap();
+    let listener = TcpListener::bind(adress).unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         thread::spawn(move || {
@@ -17,7 +17,7 @@ pub fn listen(adress: &str, routing: Vec<(String, &dyn RequestHandler)>) {
             let mut responder = stream.try_clone().unwrap();
             let _ = super::request_parser::parse(&mut reader);
 
-            let _ = responder.write_all(b"HTTP/1.0 200 OK\n\r      Content-Type:      text/html\n\r\n\r<body>Oh fuck, oh shit</body>");
+            let _ = responder.write_all(b"HTTP/1.0 200 OK\n\r     Content-Type:      text/html\n\r\n\r<body>Oh fuck, oh shit</body>");
         });
     }
 }
