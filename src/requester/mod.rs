@@ -120,7 +120,7 @@ fn parse_head(mut buf_iter: &mut BufIter) -> (String, HashMap<String, String>) {
 }
 
 fn parse_first_line(first_line: &String) -> Option<(Method, Uri, Version)> {
-    let parser = Regex::new("([A-Z]+)\\s+(\\S+)\\s+HTTP\\/(\\d\\.\\d)").unwrap();
+    let parser = Regex::new("([A-Z]+)\\s+(\\S+)\\s+HTTP/(\\d\\.\\d)").unwrap();
 
     match parser.captures(&first_line) {
         None => None,
