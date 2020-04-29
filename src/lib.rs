@@ -1,4 +1,5 @@
 extern crate http;
+extern crate regex; 
 
 
 #[cfg(test)]
@@ -12,11 +13,12 @@ use std::io::Write;
 use http::{Request, Response};
 use std::net::{TcpListener};
 use std::thread;
-
+use regex::Regex;
 
 pub trait RequestHandler : Sync {
     fn handle(&self, request: Request<Vec<u8>>) -> Response<Vec<u8>>;
 }
+
 
 //pub type Hndle = dyn Fn (Request<Vec<u8>>) -> Response<Vec<u8>>;
 
@@ -33,7 +35,7 @@ pub fn listen<'a>(adress: &'a str, routing: &'static dyn RequestHandler) {
             let response = routing.handle(request);
 
             let response = responser::to_bytes(response);
-            println!("{}", String::from_utf8(response.clone()).unwrap());
+            //println!("{}", String::from_utf8(response.clone()).unwrap());
             let _ = responder.write_all(&response[0..response.len()]);
         });
     }

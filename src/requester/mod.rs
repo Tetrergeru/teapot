@@ -11,6 +11,12 @@ pub fn parse(mut reader: &mut dyn BufRead) -> Request<Vec<u8>> {
     let mut buf_iter = BufIter::new(&mut reader);
 
     let (first_line, headers) = parse_head(&mut buf_iter);
+    println!("{}", first_line);
+    for h in headers.clone() {
+        println!("{}: {}", h.0, h.1);
+    }
+    println!();
+
     let (method, uri, version) = parse_first_line(&first_line).unwrap();
     
     let mut request = http::request::Builder::new()
@@ -98,7 +104,7 @@ fn get_line(iter: &mut BufIter) -> Vec<u8> {
 
 fn parse_head(mut buf_iter: &mut BufIter) -> (String, HashMap<String, String>) {
     let mut headers = HashMap::<String, String>::new();
-    let header_parser = Regex::new("\\s*([\\w-]+):\\s+(\\S+)\\s*").unwrap();
+    let header_parser = Regex::new("^\\s*([\\w-]+):\\s+(.+)\\s*$").unwrap();
 
     let mut buf: Vec::<u8>;
 
@@ -120,8 +126,7 @@ fn parse_head(mut buf_iter: &mut BufIter) -> (String, HashMap<String, String>) {
 }
 
 fn parse_first_line(first_line: &String) -> Option<(Method, Uri, Version)> {
-    let parser = Regex::new("([A-Z]+)\\s+(\\S+)\\s+HTTP/(\\d\\.\\d)").unwrap();
-
+    let parser = Regex::new("^([A-Z]+)\\s+(\\S+)\\s+HTTP/(\\d\\.\\d)").unwrap();
     match parser.captures(&first_line) {
         None => None,
         Some(capture) => Some((
