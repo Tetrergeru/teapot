@@ -23,8 +23,9 @@ pub fn parse(mut reader: &mut dyn BufRead) -> Request<Vec<u8>> {
         .method(method)
         .uri(uri)
         .version(version);
-    
+
     let header_map = request.headers_mut().unwrap();
+
     for h in headers.iter() {
         header_map.append(HeaderName::from_str(&h.0).unwrap(), h.1.parse().unwrap());
     }
@@ -72,7 +73,7 @@ impl<'a> Iterator for BufIter<'a> {
 
     fn next(&mut self) -> Option<u8> {
         self.current_position += 1;
-        if self.current_position == self.payload_size {
+        if self.current_position >= self.payload_size {
             self.payload_size = (*self.stream).read(&mut self.payload).unwrap();
             if self.payload_size == 0 {
                 return None;
@@ -80,6 +81,9 @@ impl<'a> Iterator for BufIter<'a> {
             self.current_position = 0;
             Some(self.payload[0])
         } else {
+            if self.current_position == 512 {
+                println!("Test {}, {}", self.current_position, self.payload_size);
+            }
             Some(self.payload[self.current_position])
         }
     }
@@ -126,7 +130,7 @@ fn parse_head(mut buf_iter: &mut BufIter) -> (String, HashMap<String, String>) {
 }
 
 fn parse_first_line(first_line: &String) -> Option<(Method, Uri, Version)> {
-    let parser = Regex::new("^([A-Z]+)\\s+(\\S+)\\s+HTTP/(\\d\\.\\d)").unwrap();
+    let parser = Regex::new("^\\s*([A-Z]+)\\s+(\\S+)\\s+HTTP/(\\d\\.\\d)\\s*$").unwrap();
     match parser.captures(&first_line) {
         None => None,
         Some(capture) => Some((

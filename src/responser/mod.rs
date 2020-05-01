@@ -25,7 +25,10 @@ pub fn to_bytes(response: Response<Vec<u8>>) -> Vec<u8> {
         format!("{} {} OK\n\r", version_to_str(head.version), head.status.as_str())
             .as_bytes() .iter() .cloned());
     for header in head.headers {
-        append(&mut bytes, format!("{}: {}\n\r", header.0.unwrap().to_string(), header.1.to_str().unwrap()).as_bytes() .iter() .cloned());
+        println!("!");
+        let h = header.0.unwrap().to_string();
+        println!("{}: {}", h, &header.1.to_str().unwrap());
+        append(&mut bytes, format!("{}: {}\n\r", h, header.1.to_str().unwrap()).as_bytes().iter().cloned());
     }
     append(&mut bytes, b"\n\r".iter().cloned());
     append(&mut bytes, body.iter().cloned());
