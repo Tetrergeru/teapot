@@ -1,5 +1,6 @@
 extern crate http;
 extern crate regex; 
+extern crate log;
 
 use http::{Request, header::HeaderName, Method, Uri, Version};
 use std::io::BufRead;
@@ -7,34 +8,36 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use regex::Regex;
 
-pub fn parse(mut reader: &mut dyn BufRead) -> Request<Vec<u8>> {
+pub fn parse(mut reader: &mut dyn BufRead) -> Option<Request<Vec<u8>>> {
     let mut buf_iter = BufIter::new(&mut reader);
 
     let (first_line, headers) = parse_head(&mut buf_iter);
-    println!("{}", first_line);
+    log::debug!("{}", first_line);
     for h in headers.clone() {
-        println!("{}: {}", h.0, h.1);
+        log::debug!("{}: {}", h.0, h.1);
     }
-    println!();
+    log::debug!("");
 
-    let (method, uri, version) = parse_first_line(&first_line).unwrap();
+    let (method, uri, version) = parse_first_line(&first_line)?;
     
     let mut request = http::request::Builder::new()
         .method(method)
         .uri(uri)
         .version(version);
 
-    let header_map = request.headers_mut().unwrap();
+    let header_map = request.headers_mut()?;
 
     for h in headers.iter() {
-        header_map.append(HeaderName::from_str(&h.0).unwrap(), h.1.parse().unwrap());
+        let name = HeaderName::from_str(&h.0).ok()?;
+        let value = h.1.parse().ok()?;
+        header_map.append(name, value);
     }
 
     let body: Vec::<u8> = match headers.get(&"Content-Length".to_string()) {
         None => Vec::new(),
-        Some(length) => buf_iter.leftovers(length.parse::<usize>().unwrap())
+        Some(length) => buf_iter.leftovers(length.parse::<usize>().ok()?)
     };
-    request.body(body).unwrap()
+    request.body(body).ok()
 }
 
 struct BufIter<'a> {
@@ -57,6 +60,9 @@ impl BufIter<'_> {
     fn leftovers(&mut self, size: usize) -> Vec<u8> {
         let mut size = size;
         let mut result = Vec::new();
+        if size == 0 {
+            return result;
+        }
         for byte in self {
             result.push(byte);
             size -= 1;
@@ -82,7 +88,7 @@ impl<'a> Iterator for BufIter<'a> {
             Some(self.payload[0])
         } else {
             if self.current_position == 512 {
-                println!("Test {}, {}", self.current_position, self.payload_size);
+                log::debug!("Test {}, {}", self.current_position, self.payload_size);
             }
             Some(self.payload[self.current_position])
         }
